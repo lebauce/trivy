@@ -41,13 +41,13 @@ func (a alpinePkgAnalyzer) Analyze(_ context.Context, input analyzer.AnalysisInp
 	}, nil
 }
 
-func (a alpinePkgAnalyzer) parseApkInfo(scanner *bufio.Scanner) ([]types.Package, []string) {
+func (a alpinePkgAnalyzer) parseApkInfo(scanner *bufio.Scanner) ([]types.Package, map[string][]string) {
 	var (
 		pkgs           []types.Package
 		pkg            types.Package
 		version        string
 		dir            string
-		installedFiles []string
+		installedFiles = make(map[string][]string)
 	)
 
 	for scanner.Scan() {
@@ -95,7 +95,8 @@ func (a alpinePkgAnalyzer) parseApkInfo(scanner *bufio.Scanner) ([]types.Package
 		case "F:":
 			dir = line[2:]
 		case "R:":
-			installedFiles = append(installedFiles, filepath.Join(dir, line[2:]))
+			pkg.SystemInstalledFiles = append(pkg.SystemInstalledFiles, filepath.Join(dir, line[2:]))
+			installedFiles[pkg.Name] = append(installedFiles[pkg.Name], filepath.Join(dir, line[2:]))
 		}
 	}
 	// in case of last paragraph

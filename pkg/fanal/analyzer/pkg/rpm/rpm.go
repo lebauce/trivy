@@ -75,7 +75,7 @@ func (a rpmPkgAnalyzer) Analyze(_ context.Context, input analyzer.AnalysisInput)
 	}, nil
 }
 
-func (a rpmPkgAnalyzer) parsePkgInfo(rc io.Reader) ([]types.Package, []string, error) {
+func (a rpmPkgAnalyzer) parsePkgInfo(rc io.Reader) ([]types.Package, map[string][]string, error) {
 	tmpDir, err := os.MkdirTemp("", "rpm")
 	if err != nil {
 		return nil, nil, xerrors.Errorf("failed to create a temp dir: %w", err)
@@ -113,7 +113,7 @@ func (a rpmPkgAnalyzer) parsePkgInfo(rc io.Reader) ([]types.Package, []string, e
 	}
 
 	var pkgs []types.Package
-	var installedFiles []string
+	installedFiles := make(map[string][]string, len(pkgList))
 	for _, pkg := range pkgList {
 		arch := pkg.Arch
 		if arch == "" {
@@ -141,20 +141,22 @@ func (a rpmPkgAnalyzer) parsePkgInfo(rc io.Reader) ([]types.Package, []string, e
 		}
 
 		p := types.Package{
-			Name:            pkg.Name,
-			Epoch:           pkg.EpochNum(),
-			Version:         pkg.Version,
-			Release:         pkg.Release,
-			Arch:            arch,
-			SrcName:         srcName,
-			SrcEpoch:        pkg.EpochNum(), // NOTE: use epoch of binary package as epoch of src package
-			SrcVersion:      srcVer,
-			SrcRelease:      srcRel,
-			Modularitylabel: pkg.Modularitylabel,
-			Licenses:        []string{pkg.License},
+			Name:                 pkg.Name,
+			Epoch:                pkg.EpochNum(),
+			Version:              pkg.Version,
+			Release:              pkg.Release,
+			Arch:                 arch,
+			SrcName:              srcName,
+			SrcEpoch:             pkg.EpochNum(), // NOTE: use epoch of binary package as epoch of src package
+			SrcVersion:           srcVer,
+			SrcRelease:           srcRel,
+			Modularitylabel:      pkg.Modularitylabel,
+			Licenses:             []string{pkg.License},
+			SystemInstalledFiles: files,
 		}
+
 		pkgs = append(pkgs, p)
-		installedFiles = append(installedFiles, files...)
+		installedFiles[p.Name] = files
 	}
 
 	return pkgs, installedFiles, nil
