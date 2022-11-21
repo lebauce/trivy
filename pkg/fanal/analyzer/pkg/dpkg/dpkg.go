@@ -121,6 +121,7 @@ func (a dpkgAnalyzer) parseDpkgPkg(scanner *bufio.Scanner) (pkg *types.Package) 
 		sourceName    string
 		isInstalled   bool
 		sourceVersion string
+		architecture  string
 	)
 	isInstalled = true
 	for {
@@ -154,6 +155,8 @@ func (a dpkgAnalyzer) parseDpkgPkg(scanner *bufio.Scanner) (pkg *types.Package) 
 					break
 				}
 			}
+		} else if strings.HasPrefix(line, "Architecture: ") {
+			architecture = strings.TrimPrefix(line, "Architecture: ")
 		}
 		if !scanner.Scan() {
 			break
@@ -188,6 +191,7 @@ func (a dpkgAnalyzer) parseDpkgPkg(scanner *bufio.Scanner) (pkg *types.Package) 
 	}
 	pkg.SrcName = sourceName
 	pkg.SrcVersion = sourceVersion
+	pkg.Arch = architecture
 
 	return pkg
 }
