@@ -29,14 +29,19 @@ func (w FS) Walk(root string, fn WalkFunc) error {
 	walkFn := func(pathname string, fi os.FileInfo) error {
 		pathname = filepath.Clean(pathname)
 
+		relPathname := pathname
+		if rel, err := filepath.Rel(root, pathname); err == nil {
+			relPathname = rel
+		}
+
 		if fi.IsDir() {
-			if w.shouldSkipDir(pathname) {
+			if w.shouldSkipDir(relPathname) {
 				return filepath.SkipDir
 			}
 			return nil
 		} else if !fi.Mode().IsRegular() {
 			return nil
-		} else if w.shouldSkipFile(pathname) {
+		} else if w.shouldSkipFile(relPathname) {
 			return nil
 		}
 
