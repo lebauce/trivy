@@ -297,6 +297,7 @@ func TestTerraformMisconfigurationScan(t *testing.T) {
 				DisabledHandlers:  nil,
 				SkipFiles:         nil,
 				SkipDirs:          nil,
+				OnlyDirs:          nil,
 				NoProgress:        false,
 				Offline:           false,
 				InsecureSkipTLS:   false,
