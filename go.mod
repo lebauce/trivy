@@ -397,3 +397,5 @@ replace github.com/spdx/tools-golang => github.com/spdx/tools-golang v0.3.0
 
 // replace go-getter with a fork switched to github.com/aws/aws-sdk-go-v2
 replace github.com/hashicorp/go-getter => github.com/lebauce/go-getter v0.0.0-20231024145104-6100164fb657
+
+replace github.com/aquasecurity/go-dep-parser => github.com/lebauce/go-dep-parser v0.0.0-20231030190658-51bbb436f1b8
