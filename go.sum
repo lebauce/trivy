@@ -312,8 +312,6 @@ github.com/aquasecurity/bolt-fixtures v0.0.0-20200903104109-d34e7f983986 h1:2a30
 github.com/aquasecurity/bolt-fixtures v0.0.0-20200903104109-d34e7f983986/go.mod h1:NT+jyeCzXk6vXR5MTkdn4z64TgGfE5HMLC8qfj5unl8=
 github.com/aquasecurity/defsec v0.82.7-0.20230103191626-4f3187c78d6b h1:3tjlf7nI/AFqoClNTOmm7MbO/HJy/ObQRzMIj2M44z8=
 github.com/aquasecurity/defsec v0.82.7-0.20230103191626-4f3187c78d6b/go.mod h1:aX3TcsZB+IA1j9AXMzxrCJQ74WcEnoO1L2TkW1vKgsA=
-github.com/aquasecurity/go-dep-parser v0.0.0-20230115135733-3be7cb085121 h1:oVuf6kGqL8aY2hCpRdlOxW7lGu4CeSv2rq46b2N7nXQ=
-github.com/aquasecurity/go-dep-parser v0.0.0-20230115135733-3be7cb085121/go.mod h1:Cj+0xDZFgXGQin2fo40aH2a9srUKMOCFPw50NHsfVEk=
 github.com/aquasecurity/go-gem-version v0.0.0-20201115065557-8eed6fe000ce h1:QgBRgJvtEOBtUXilDb1MLi1p1MWoyFDXAu5DEUl5nwM=
 github.com/aquasecurity/go-gem-version v0.0.0-20201115065557-8eed6fe000ce/go.mod h1:HXgVzOPvXhVGLJs4ZKO817idqr/xhwsTcj17CLYY74s=
 github.com/aquasecurity/go-mock-aws v0.0.0-20220726154943-99847deb62b0 h1:tihCUjLWkF0b1SAjAKcFltUs3SpsqGrLtI+Frye0D10=
@@ -334,8 +332,6 @@ github.com/aquasecurity/testdocker v0.0.0-20230111101738-e741bda259da h1:pj/adfN
 github.com/aquasecurity/testdocker v0.0.0-20230111101738-e741bda259da/go.mod h1:852lbQLpK2nCwlR4ZLYIccxYCfoQao6q9Nl6tjz54v8=
 github.com/aquasecurity/tml v0.6.1 h1:y2ZlGSfrhnn7t4ZJ/0rotuH+v5Jgv6BDDO5jB6A9gwo=
 github.com/aquasecurity/tml v0.6.1/go.mod h1:OnYMWY5lvI9ejU7yH9LCberWaaTBW7hBFsITiIMY2yY=
-github.com/aquasecurity/trivy-db v0.0.0-20230105123735-5ce110fc82e1 h1:3ANUmuIZlMpSmhd6ah3FWQuZxZQFdpRzlrn0p90zzVc=
-github.com/aquasecurity/trivy-db v0.0.0-20230105123735-5ce110fc82e1/go.mod h1:/nULgnDeq/JMPMVwE1dmf4kWlYn++7VrM3O2naj4BHA=
 github.com/aquasecurity/trivy-kubernetes v0.3.1-0.20221021174315-8d74450b4506 h1:maijOWmI5Ec/R7V0wpXoqvQC7fTjQD+PbDktKIK1VXs=
 github.com/aquasecurity/trivy-kubernetes v0.3.1-0.20221021174315-8d74450b4506/go.mod h1:xXd1m0iRJrz3ISbOXVDaR4hCWoSrF4RbIfNTN4dTrjY=
 github.com/arbovm/levenshtein v0.0.0-20160628152529-48b4e1c0c4d0 h1:jfIu9sQUG6Ig+0+Ap1h4unLjW6YQJpKZVmUzxsD4E/Q=
@@ -1256,6 +1252,8 @@ github.com/lebauce/go-dep-parser v0.0.0-20231030190658-51bbb436f1b8 h1:yY34EefI9
 github.com/lebauce/go-dep-parser v0.0.0-20231030190658-51bbb436f1b8/go.mod h1:Cj+0xDZFgXGQin2fo40aH2a9srUKMOCFPw50NHsfVEk=
 github.com/lebauce/go-getter v0.0.0-20231024145104-6100164fb657 h1:W2x07+0be2Wnj6OiS3+vhdQKZWDh/MCMsPgmZc/shbk=
 github.com/lebauce/go-getter v0.0.0-20231024145104-6100164fb657/go.mod h1:+P2mjyghxuha9I9ym4ri5B5INjeaiPJx26/P8bMOVEY=
+github.com/lebauce/trivy-db v0.0.0-20231031000443-2d41e0fab0ae h1:kPeQn+9KEEqrlIApu6c70E2ESDc//Hgpy6Ja+lZXxIs=
+github.com/lebauce/trivy-db v0.0.0-20231031000443-2d41e0fab0ae/go.mod h1:/nULgnDeq/JMPMVwE1dmf4kWlYn++7VrM3O2naj4BHA=
 github.com/leodido/go-urn v1.2.0/go.mod h1:+8+nEpDfqqsY+g338gtMEUOtuK+4dEMhiQEgxpxOKII=
 github.com/leodido/go-urn v1.2.1 h1:BqpAaACuzVSgi/VLzGZIobT2z4v53pjosyNd9Yv6n/w=
 github.com/liamg/iamgo v0.0.9 h1:tADGm3xVotyRJmuKKaH4+zsBn7LOcvgdpuF3WsSKW3c=
