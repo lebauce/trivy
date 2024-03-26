@@ -2,11 +2,7 @@ package all
 
 import (
 	_ "github.com/aquasecurity/trivy/pkg/fanal/analyzer/buildinfo"
-	_ "github.com/aquasecurity/trivy/pkg/fanal/analyzer/config/all"
 	_ "github.com/aquasecurity/trivy/pkg/fanal/analyzer/executable"
-	_ "github.com/aquasecurity/trivy/pkg/fanal/analyzer/imgconf/apk"
-	_ "github.com/aquasecurity/trivy/pkg/fanal/analyzer/imgconf/dockerfile"
-	_ "github.com/aquasecurity/trivy/pkg/fanal/analyzer/imgconf/secret"
 	_ "github.com/aquasecurity/trivy/pkg/fanal/analyzer/language/c/conan"
 	_ "github.com/aquasecurity/trivy/pkg/fanal/analyzer/language/conda/meta"
 	_ "github.com/aquasecurity/trivy/pkg/fanal/analyzer/language/dart/pub"
@@ -47,5 +43,4 @@ import (
 	_ "github.com/aquasecurity/trivy/pkg/fanal/analyzer/pkg/rpm"
 	_ "github.com/aquasecurity/trivy/pkg/fanal/analyzer/repo/apk"
 	_ "github.com/aquasecurity/trivy/pkg/fanal/analyzer/sbom"
-	_ "github.com/aquasecurity/trivy/pkg/fanal/analyzer/secret"
 )
