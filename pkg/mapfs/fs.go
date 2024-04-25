@@ -134,6 +134,7 @@ func (m *FS) CopyFilesUnder(dir string) error {
 
 func (m *FS) stat(name string) (fs.FileInfo, error) {
 	if underlyingFS, ok := m.underlyingFS.(fs.StatFS); ok && m.underlyingFS != nil {
+		name = strings.TrimLeft(name, "/")
 		return underlyingFS.Stat(name)
 	}
 	return os.Stat(name)
@@ -141,7 +142,7 @@ func (m *FS) stat(name string) (fs.FileInfo, error) {
 
 // Stat returns a FileInfo describing the file.
 func (m *FS) Stat(name string) (fs.FileInfo, error) {
-	if strings.HasPrefix(name, "../") && m.underlyingRoot != "" {
+	if !filepath.IsAbs(name) && m.underlyingRoot != "" {
 		return m.stat(filepath.Join(m.underlyingRoot, name))
 	}
 
@@ -163,6 +164,7 @@ func (m *FS) Stat(name string) (fs.FileInfo, error) {
 
 func (m *FS) readDir(name string) ([]fs.DirEntry, error) {
 	if underlyingFS, ok := m.underlyingFS.(fs.ReadDirFS); ok && m.underlyingFS != nil {
+		name = strings.TrimLeft(name, "/")
 		return underlyingFS.ReadDir(name)
 	}
 	return os.ReadDir(name)
@@ -179,6 +181,7 @@ func (m *FS) ReadDir(name string) ([]fs.DirEntry, error) {
 
 func (m *FS) open(name string) (fs.File, error) {
 	if m.underlyingFS != nil {
+		name = strings.TrimLeft(name, "/")
 		return m.underlyingFS.Open(name)
 	}
 	return os.Open(name)
@@ -228,7 +231,7 @@ func (m *FS) readFile(name string) ([]byte, error) {
 // The caller is permitted to modify the returned byte slice.
 // This method should return a copy of the underlying data.
 func (m *FS) ReadFile(name string) ([]byte, error) {
-	if strings.HasPrefix(name, "../") && m.underlyingRoot != "" {
+	if !filepath.IsAbs(name) && m.underlyingRoot != "" {
 		return m.readFile(filepath.Join(m.underlyingRoot, name))
 	}
 
