@@ -68,7 +68,7 @@ func (a dpkgAnalyzer) PostAnalyze(_ context.Context, input analyzer.PostAnalysis
 	packageFiles := make(map[string][]string)
 
 	// parse other files
-	err = fsutils.WalkDir(input.FS, ".", required, func(path string, d fs.DirEntry, r io.Reader) error {
+	err = fsutils.WalkDir(input.FS, "var/lib/dpkg", required, func(path string, d fs.DirEntry, r io.Reader) error {
 		// parse list files
 		if a.isListFile(filepath.Split(path)) {
 			scanner := bufio.NewScanner(r)
@@ -155,7 +155,7 @@ func (a dpkgAnalyzer) parseDpkgAvailable(fsys fs.FS) (map[string]digest.Digest, 
 	for scanner.Scan() {
 		header, err := scanner.Header()
 		if !errors.Is(err, io.EOF) && err != nil {
-			log.Logger.Warnw("Parse error", zap.String("file", availableFile), zap.Error(err))
+			// log.Logger.Warnw("Parse error", zap.String("file", availableFile), zap.Error(err))
 			continue
 		}
 		name, version, checksum := header.Get("Package"), header.Get("Version"), header.Get("SHA256")
@@ -181,7 +181,7 @@ func (a dpkgAnalyzer) parseDpkgStatus(filePath string, r io.Reader, digests map[
 	for scanner.Scan() {
 		header, err := scanner.Header()
 		if !errors.Is(err, io.EOF) && err != nil {
-			log.Logger.Warnw("Parse error", zap.String("file", filePath), zap.Error(err))
+			// log.Logger.Warnw("Parse error", zap.String("file", filePath), zap.Error(err))
 			continue
 		}
 

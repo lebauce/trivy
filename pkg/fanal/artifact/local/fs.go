@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/json"
+	"io/fs"
 	"os"
 	"path"
 	"path/filepath"
@@ -25,6 +26,7 @@ import (
 
 type Artifact struct {
 	rootPath       string
+	fsys           fs.FS
 	cache          cache.ArtifactCache
 	walker         walker.FS
 	analyzer       analyzer.AnalyzerGroup
@@ -33,7 +35,7 @@ type Artifact struct {
 	artifactOption artifact.Option
 }
 
-func NewArtifact(rootPath string, c cache.ArtifactCache, opt artifact.Option) (artifact.Artifact, error) {
+func NewArtifact(fsys fs.FS, rootPath string, c cache.ArtifactCache, opt artifact.Option) (artifact.Artifact, error) {
 	handlerManager, err := handler.NewManager(opt)
 	if err != nil {
 		return nil, xerrors.Errorf("handler initialize error: %w", err)
@@ -44,10 +46,15 @@ func NewArtifact(rootPath string, c cache.ArtifactCache, opt artifact.Option) (a
 		return nil, xerrors.Errorf("analyzer group error: %w", err)
 	}
 
+	skipRootPath := rootPath
+	if skipRootPath == "/" {
+		skipRootPath = "."
+	}
 	return Artifact{
+		fsys:     fsys,
 		rootPath: filepath.ToSlash(filepath.Clean(rootPath)),
 		cache:    c,
-		walker: walker.NewFS(buildPathsToSkip(rootPath, opt.SkipFiles), buildPathsToSkip(rootPath, opt.SkipDirs), buildPathsToSkip(rootPath, opt.OnlyDirs),
+		walker: walker.NewFS(buildPathsToSkip(skipRootPath, opt.SkipFiles), buildPathsToSkip(skipRootPath, opt.SkipDirs), buildPathsToSkip(skipRootPath, opt.OnlyDirs),
 			opt.Parallel, opt.WalkOption.ErrorCallback),
 		analyzer:       a,
 		handlerManager: handlerManager,
@@ -126,7 +133,7 @@ func (a Artifact) Inspect(ctx context.Context) (types.ArtifactReference, error) 
 		return types.ArtifactReference{}, xerrors.Errorf("failed to prepare filesystem for post analysis: %w", err)
 	}
 
-	err = a.walker.Walk(a.rootPath, func(filePath string, info os.FileInfo, opener analyzer.Opener) error {
+	err = a.walker.Walk(a.fsys, ".", func(filePath string, info os.FileInfo, opener analyzer.Opener) error {
 		dir := a.rootPath
 
 		// When the directory is the same as the filePath, a file was given
@@ -146,7 +153,11 @@ func (a Artifact) Inspect(ctx context.Context) (types.ArtifactReference, error) 
 		}
 
 		// Build filesystem for post analysis
-		if err := composite.CreateLink(analyzerTypes, dir, filePath, filepath.Join(dir, filePath)); err != nil {
+		rootDir := dir
+		if rootDir == "." {
+			rootDir = "/"
+		}
+		if err := composite.CreateLink(analyzerTypes, a.fsys, rootDir, filePath, filepath.Join(dir, filePath)); err != nil {
 			return xerrors.Errorf("failed to create link: %w", err)
 		}
 

@@ -1,6 +1,7 @@
 package walker
 
 import (
+	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -40,15 +41,22 @@ func NewFS(skipFiles, skipDirs, onlyDirs []string, parallel int, errCallback Err
 
 // Walk walks the file tree rooted at root, calling WalkFunc for each file or
 // directory in the tree, including root, but a directory to be ignored will be skipped.
-func (w FS) Walk(root string, fn WalkFunc) error {
+func (w FS) Walk(fsys fs.FS, root string, fn WalkFunc) error {
 	// walk function called for every path found
 	walkFn := func(pathname string, fi os.FileInfo) error {
 		pathname = filepath.Clean(pathname)
 
-		// For exported rootfs (e.g. images/alpine/etc/alpine-release)
-		relPath, err := filepath.Rel(root, pathname)
-		if err != nil {
-			return xerrors.Errorf("filepath rel (%s): %w", relPath, err)
+		var err error
+		var relPath string
+
+		if root == "." {
+			relPath = pathname
+		} else {
+			// For exported rootfs (e.g. images/alpine/etc/alpine-release)
+			relPath, err = filepath.Rel(root, pathname)
+			if err != nil {
+				return xerrors.Errorf("filepath rel (%s): %w", relPath, err)
+			}
 		}
 		relPath = filepath.ToSlash(relPath)
 
@@ -64,7 +72,7 @@ func (w FS) Walk(root string, fn WalkFunc) error {
 			return nil
 		}
 
-		if err = fn(relPath, fi, w.fileOpener(pathname)); err != nil {
+		if err = fn(relPath, fi, w.fileOpener(fsys, pathname)); err != nil {
 			return xerrors.Errorf("failed to analyze file: %w", err)
 		}
 		return nil
@@ -72,7 +80,7 @@ func (w FS) Walk(root string, fn WalkFunc) error {
 
 	if w.parallel <= 1 {
 		// In series: fast, with higher CPU/memory
-		return w.walkSlow(root, walkFn)
+		return w.walkSlow(fsys, root, walkFn)
 	}
 
 	// In parallel: slow, with lower CPU/memory
@@ -94,15 +102,9 @@ func (w FS) walkFast(root string, walkFn fastWalkFunc) error {
 	return nil
 }
 
-func (w FS) walkSlow(root string, walkFn fastWalkFunc) error {
+func (w FS) walkSlow(fsys fs.FS, root string, walkFn fastWalkFunc) error {
 	log.Logger.Debugf("Walk the file tree rooted at '%s' in series", root)
-
-	relPath, err := filepath.Rel("/", root)
-	if err != nil {
-		return err
-	}
-
-	err = fs.WalkDir(os.DirFS("/"), relPath, func(path string, d fs.DirEntry, err error) error {
+	err := fs.WalkDir(fsys, root, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return w.errCallback(path, err)
 		}
@@ -110,7 +112,8 @@ func (w FS) walkSlow(root string, walkFn fastWalkFunc) error {
 		if err != nil {
 			return xerrors.Errorf("file info error: %w", err)
 		}
-		return walkFn(string(filepath.Separator)+path, info)
+		return walkFn(path, info)
+		//return walkFn(string(filepath.Separator)+path, info)
 	})
 	if err != nil {
 		return xerrors.Errorf("walk dir error: %w", err)
@@ -119,8 +122,18 @@ func (w FS) walkSlow(root string, walkFn fastWalkFunc) error {
 }
 
 // fileOpener returns a function opening a file.
-func (w *walker) fileOpener(pathname string) func() (xio.ReadSeekCloserAt, error) {
+func (w *walker) fileOpener(fsys fs.FS, pathname string) func() (xio.ReadSeekCloserAt, error) {
 	return func() (xio.ReadSeekCloserAt, error) {
-		return os.Open(pathname)
+		f, err := fsys.Open(pathname)
+		if err != nil {
+			return nil, err
+		}
+
+		file, ok := f.(xio.ReadSeekCloserAt)
+		if !ok {
+			return nil, fmt.Errorf("failed to create dio.ReadSeekCloserAt for %s", pathname)
+		}
+
+		return file, nil
 	}
 }

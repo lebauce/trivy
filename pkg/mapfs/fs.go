@@ -15,6 +15,7 @@ import (
 	xsync "github.com/aquasecurity/trivy/pkg/x/sync"
 )
 
+// allFS bundles all implemented the fs interfaces
 type allFS interface {
 	fs.ReadFileFS
 	fs.ReadDirFS
@@ -35,6 +36,9 @@ type FS struct {
 	// In other words, although mapfs.Open("../foo") would normally result in an error, if this option is enabled,
 	// it will be executed as os.Open(filepath.Join(underlyingRoot, "../foo")).
 	underlyingRoot string
+
+	// When the underlyingFS has a value, it allows access to a virtual filesystem of the local one
+	underlyingFS fs.FS
 }
 
 type Option func(*FS)
@@ -43,6 +47,13 @@ type Option func(*FS)
 func WithUnderlyingRoot(root string) Option {
 	return func(fsys *FS) {
 		fsys.underlyingRoot = root
+	}
+}
+
+// WithUnderlyingFS returns an option to set the underlying root path for the in-memory filesystem.
+func WithUnderlyingFS(fs fs.FS) Option {
+	return func(fsys *FS) {
+		fsys.underlyingFS = fs
 	}
 }
 
@@ -77,7 +88,7 @@ func (m *FS) Filter(skippedFiles []string) (*FS, error) {
 }
 
 func (m *FS) FilterFunc(fn func(path string, d fs.DirEntry) (bool, error)) (*FS, error) {
-	newFS := New(WithUnderlyingRoot(m.underlyingRoot))
+	newFS := New(WithUnderlyingRoot(m.underlyingRoot), WithUnderlyingFS(m.underlyingFS))
 	err := fs.WalkDir(m, ".", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
@@ -121,10 +132,17 @@ func (m *FS) CopyFilesUnder(dir string) error {
 	})
 }
 
+func (m *FS) stat(name string) (fs.FileInfo, error) {
+	if underlyingFS, ok := m.underlyingFS.(fs.StatFS); ok && m.underlyingFS != nil {
+		return underlyingFS.Stat(name)
+	}
+	return os.Stat(name)
+}
+
 // Stat returns a FileInfo describing the file.
 func (m *FS) Stat(name string) (fs.FileInfo, error) {
 	if strings.HasPrefix(name, "../") && m.underlyingRoot != "" {
-		return os.Stat(filepath.Join(m.underlyingRoot, name))
+		return m.stat(filepath.Join(m.underlyingRoot, name))
 	}
 
 	name = cleanPath(name)
@@ -139,22 +157,37 @@ func (m *FS) Stat(name string) (fs.FileInfo, error) {
 	if f.isVirtual() {
 		return &f.stat, nil
 	}
-	return os.Stat(f.underlyingPath)
+
+	return m.stat(f.underlyingPath)
+}
+
+func (m *FS) readDir(name string) ([]fs.DirEntry, error) {
+	if underlyingFS, ok := m.underlyingFS.(fs.ReadDirFS); ok && m.underlyingFS != nil {
+		return underlyingFS.ReadDir(name)
+	}
+	return os.ReadDir(name)
 }
 
 // ReadDir reads the named directory
 // and returns a list of directory entries sorted by filename.
 func (m *FS) ReadDir(name string) ([]fs.DirEntry, error) {
-	if strings.HasPrefix(name, "../") && m.underlyingRoot != "" {
-		return os.ReadDir(filepath.Join(m.underlyingRoot, name))
+	if !filepath.IsAbs(name) && m.underlyingRoot != "" {
+		return m.readDir(filepath.Join(m.underlyingRoot, name))
 	}
 	return m.root.ReadDir(cleanPath(name))
 }
 
+func (m *FS) open(name string) (fs.File, error) {
+	if m.underlyingFS != nil {
+		return m.underlyingFS.Open(name)
+	}
+	return os.Open(name)
+}
+
 // Open opens the named file for reading.
 func (m *FS) Open(name string) (fs.File, error) {
-	if strings.HasPrefix(name, "../") && m.underlyingRoot != "" {
-		return os.Open(filepath.Join(m.underlyingRoot, name))
+	if !filepath.IsAbs(name) && m.underlyingRoot != "" {
+		return m.open(filepath.Join(m.underlyingRoot, name))
 	}
 	return m.root.Open(cleanPath(name))
 }
@@ -180,6 +213,13 @@ func (m *FS) MkdirAll(path string, perm fs.FileMode) error {
 	return m.root.MkdirAll(cleanPath(path), perm)
 }
 
+func (m *FS) readFile(name string) ([]byte, error) {
+	if underlyingFS, ok := m.underlyingFS.(fs.ReadFileFS); ok && m.underlyingFS != nil {
+		return underlyingFS.ReadFile(name)
+	}
+	return os.ReadFile(filepath.Join(m.underlyingRoot, name))
+}
+
 // ReadFile reads the named file and returns its contents.
 // A successful call returns a nil error, not io.EOF.
 // (Because ReadFile reads the whole file, the expected EOF
@@ -189,7 +229,7 @@ func (m *FS) MkdirAll(path string, perm fs.FileMode) error {
 // This method should return a copy of the underlying data.
 func (m *FS) ReadFile(name string) ([]byte, error) {
 	if strings.HasPrefix(name, "../") && m.underlyingRoot != "" {
-		return os.ReadFile(filepath.Join(m.underlyingRoot, name))
+		return m.readFile(filepath.Join(m.underlyingRoot, name))
 	}
 
 	f, err := m.root.Open(cleanPath(name))

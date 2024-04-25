@@ -8,6 +8,8 @@ package artifact
 
 import (
 	"context"
+	"os"
+
 	"github.com/aquasecurity/trivy-db/pkg/db"
 	"github.com/aquasecurity/trivy/pkg/fanal/applier"
 	"github.com/aquasecurity/trivy/pkg/fanal/artifact"
@@ -82,7 +84,7 @@ func initializeFilesystemScanner(ctx context.Context, path string, artifactCache
 	config := db.Config{}
 	client := vulnerability.NewClient(config)
 	localScanner := local.NewScanner(applierApplier, ospkgScanner, langpkgScanner, client)
-	artifactArtifact, err := local2.NewArtifact(path, artifactCache, artifactOption)
+	artifactArtifact, err := local2.NewArtifact(os.DirFS(path), ".", artifactCache, artifactOption)
 	if err != nil {
 		return scanner.Scanner{}, nil, err
 	}
@@ -185,7 +187,7 @@ func initializeRemoteArchiveScanner(ctx context.Context, filePath string, artifa
 func initializeRemoteFilesystemScanner(ctx context.Context, path string, artifactCache cache.ArtifactCache, remoteScanOptions client.ScannerOption, artifactOption artifact.Option) (scanner.Scanner, func(), error) {
 	v := _wireValue
 	clientScanner := client.NewScanner(remoteScanOptions, v...)
-	artifactArtifact, err := local2.NewArtifact(path, artifactCache, artifactOption)
+	artifactArtifact, err := local2.NewArtifact(os.DirFS(path), ".", artifactCache, artifactOption)
 	if err != nil {
 		return scanner.Scanner{}, nil, err
 	}

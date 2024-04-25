@@ -2,8 +2,11 @@ package repo
 
 import (
 	"context"
+	"io/fs"
 	"net/url"
 	"os"
+	"path/filepath"
+	"strings"
 
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
@@ -69,7 +72,14 @@ func tryLocalRepo(target string, c cache.ArtifactCache, artifactOpt artifact.Opt
 		return nil, xerrors.Errorf("no such path: %w", err)
 	}
 
-	art, err := local.NewArtifact(target, c, artifactOpt)
+	var fs fs.FS
+	if filepath.IsAbs(target) {
+		fs, target = os.DirFS("/"), strings.TrimLeft(target, string(os.PathSeparator))
+	} else {
+		fs = os.DirFS(".")
+	}
+
+	art, err := local.NewArtifact(fs, target, c, artifactOpt)
 	if err != nil {
 		return nil, xerrors.Errorf("local repo artifact error: %w", err)
 	}
@@ -92,7 +102,14 @@ func tryRemoteRepo(target string, c cache.ArtifactCache, artifactOpt artifact.Op
 
 	cleanup = func() { _ = os.RemoveAll(tmpDir) }
 
-	art, err := local.NewArtifact(tmpDir, c, artifactOpt)
+	var fs fs.FS
+	if filepath.IsAbs(tmpDir) {
+		fs, tmpDir = os.DirFS("/"), strings.TrimLeft(tmpDir, string(os.PathSeparator))
+	} else {
+		fs = os.DirFS(".")
+	}
+
+	art, err := local.NewArtifact(fs, tmpDir, c, artifactOpt)
 	if err != nil {
 		return nil, cleanup, xerrors.Errorf("fs artifact: %w", err)
 	}

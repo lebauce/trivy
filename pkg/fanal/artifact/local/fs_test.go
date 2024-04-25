@@ -3,9 +3,11 @@ package local
 import (
 	"context"
 	"errors"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -245,7 +247,7 @@ func TestArtifact_Inspect(t *testing.T) {
 			c := new(cache.MockArtifactCache)
 			c.ApplyPutBlobExpectation(tt.putBlobExpectation)
 
-			a, err := NewArtifact(tt.fields.dir, c, tt.artifactOpt)
+			a, err := NewArtifact(os.DirFS("."), tt.fields.dir, c, tt.artifactOpt)
 			require.NoError(t, err)
 
 			got, err := a.Inspect(context.Background())
@@ -816,7 +818,7 @@ func TestTerraformMisconfigurationScan(t *testing.T) {
 				types.SystemFileFilteringPostHandler,
 			}
 			tt.artifactOpt.MisconfScannerOption.DisableEmbeddedPolicies = true
-			a, err := NewArtifact(tt.fields.dir, c, tt.artifactOpt)
+			a, err := NewArtifact(os.DirFS("."), tt.fields.dir, c, tt.artifactOpt)
 			require.NoError(t, err)
 
 			got, err := a.Inspect(context.Background())
@@ -1395,7 +1397,15 @@ func TestCloudFormationMisconfigurationScan(t *testing.T) {
 				types.SystemFileFilteringPostHandler,
 			}
 			tt.artifactOpt.MisconfScannerOption.DisableEmbeddedPolicies = true
-			a, err := NewArtifact(tt.fields.dir, c, tt.artifactOpt)
+
+			var fs fs.FS
+			if filepath.IsAbs(tt.fields.dir) {
+				fs, tt.fields.dir = os.DirFS("/"), strings.TrimLeft(tt.fields.dir, string(os.PathSeparator))
+			} else {
+				fs = os.DirFS(".")
+			}
+
+			a, err := NewArtifact(fs, tt.fields.dir, c, tt.artifactOpt)
 			require.NoError(t, err)
 
 			got, err := a.Inspect(context.Background())
@@ -1630,7 +1640,7 @@ func TestDockerfileMisconfigurationScan(t *testing.T) {
 			tt.artifactOpt.DisabledHandlers = []types.HandlerType{
 				types.SystemFileFilteringPostHandler,
 			}
-			a, err := NewArtifact(tt.fields.dir, c, tt.artifactOpt)
+			a, err := NewArtifact(os.DirFS("."), tt.fields.dir, c, tt.artifactOpt)
 			require.NoError(t, err)
 
 			got, err := a.Inspect(context.Background())
@@ -1898,7 +1908,7 @@ func TestKubernetesMisconfigurationScan(t *testing.T) {
 			tt.artifactOpt.DisabledHandlers = []types.HandlerType{
 				types.SystemFileFilteringPostHandler,
 			}
-			a, err := NewArtifact(tt.fields.dir, c, tt.artifactOpt)
+			a, err := NewArtifact(os.DirFS("."), tt.fields.dir, c, tt.artifactOpt)
 			require.NoError(t, err)
 
 			got, err := a.Inspect(context.Background())
@@ -2155,7 +2165,7 @@ func TestAzureARMMisconfigurationScan(t *testing.T) {
 			tt.artifactOpt.DisabledHandlers = []types.HandlerType{
 				types.SystemFileFilteringPostHandler,
 			}
-			a, err := NewArtifact(tt.fields.dir, c, tt.artifactOpt)
+			a, err := NewArtifact(os.DirFS("."), tt.fields.dir, c, tt.artifactOpt)
 			require.NoError(t, err)
 
 			got, err := a.Inspect(context.Background())
@@ -2271,7 +2281,7 @@ func TestMixedConfigurationScan(t *testing.T) {
 			tt.artifactOpt.DisabledHandlers = []types.HandlerType{
 				types.SystemFileFilteringPostHandler,
 			}
-			a, err := NewArtifact(tt.fields.dir, c, tt.artifactOpt)
+			a, err := NewArtifact(os.DirFS("."), tt.fields.dir, c, tt.artifactOpt)
 			require.NoError(t, err)
 
 			got, err := a.Inspect(context.Background())

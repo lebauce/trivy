@@ -64,14 +64,17 @@ func (c *CompositeFS) CopyFileToTemp(opener Opener, info os.FileInfo) (string, e
 
 // CreateLink creates a link in the virtual filesystem that corresponds to a real file.
 // The linked virtual file will have the same path as the real file path provided.
-func (c *CompositeFS) CreateLink(analyzerTypes []Type, rootDir, virtualPath, realPath string) error {
+func (c *CompositeFS) CreateLink(analyzerTypes []Type, rootFS fs.FS, rootDir, virtualPath, realPath string) error {
 	// Create fs.FS for each post-analyzer that wants to analyze the current file
 	for _, t := range analyzerTypes {
-		// Since filesystem scanning may require access outside the specified path, (e.g. Terraform modules)
+		// Since filesystem scanning may require access outside the specified path, (e.g. Terraform modules)x
 		// it allows "../" access with "WithUnderlyingRoot".
 		var opts []mapfs.Option
 		if rootDir != "" {
 			opts = append(opts, mapfs.WithUnderlyingRoot(rootDir))
+		}
+		if rootFS != nil {
+			opts = append(opts, mapfs.WithUnderlyingFS(rootFS))
 		}
 		mfs, _ := c.files.LoadOrStore(t, mapfs.New(opts...))
 		if d := path.Dir(virtualPath); d != "." {
