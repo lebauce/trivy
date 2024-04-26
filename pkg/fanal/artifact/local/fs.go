@@ -133,7 +133,12 @@ func (a Artifact) Inspect(ctx context.Context) (types.ArtifactReference, error) 
 		return types.ArtifactReference{}, xerrors.Errorf("failed to prepare filesystem for post analysis: %w", err)
 	}
 
-	err = a.walker.Walk(a.fsys, ".", func(filePath string, info os.FileInfo, opener analyzer.Opener) error {
+	rootPath := a.rootPath
+	if filepath.IsAbs(rootPath) {
+		rootPath, _ = filepath.Rel("/", rootPath)
+	}
+
+	err = a.walker.Walk(a.fsys, rootPath, func(filePath string, info os.FileInfo, opener analyzer.Opener) error {
 		dir := a.rootPath
 
 		// When the directory is the same as the filePath, a file was given
