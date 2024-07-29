@@ -37,6 +37,7 @@ func NewFS(skipFiles, skipDirs, onlyDirs []string, parallel int, errCallback Err
 	return FS{
 		walker:      newWalker(skipFiles, skipDirs, onlyDirs),
 		errCallback: errCallback,
+		parallel:    parallel,
 	}
 }
 
